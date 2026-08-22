@@ -1,7 +1,7 @@
 {
   "name": "Golang Development Environment (Debian)",
   
-  "image": "ghcr.io/onisi/omu-sss-websys:2025fall",
+  "image": "ghcr.io/onisi/omu-sss-websys:2026fall",
   
   "customizations": {
     "vscode": {
