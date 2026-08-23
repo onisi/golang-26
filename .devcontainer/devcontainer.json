@@ -67,6 +67,7 @@
         },
         "chat.mcp.enabled": false,
         "chat.mcp.gallery.enabled": false,
+	"chat.commandCenter.enabled": false,
         
         // ===== Go設定 =====
         "go.useLanguageServer": true,

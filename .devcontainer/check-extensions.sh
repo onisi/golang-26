@@ -1,4 +1,9 @@
-LLOWED_EXTENSIONS=(
+#!/bin/bash
+# 拡張機能監視スクリプト
+# 用途: 許可されていない拡張機能をチェック
+
+# 許可された拡張機能リスト
+ALLOWED_EXTENSIONS=(
     "golang.go"
     "oderwat.indent-rainbow"
     "mosapride.zenkaku"
@@ -35,10 +40,22 @@ echo "🔍 拡張機能チェック中..."
 echo ""
 
 # インストール済み拡張機能を取得
-INSTALLED=$(code --list-extensions 2>/dev/null)
+# 新しいVS Code CLIは「Codespaces: <名前> にインストールされている拡張機能:」等の
+# 見出し行と、各拡張機能行の先頭に "  - " という箇条書きプレフィックスを付けて
+# グループ化出力することがあるため、それらを取り除いてIDだけの行に正規化する。
+RAW_INSTALLED=$(code --list-extensions 2>/dev/null)
+
+if [ -z "$RAW_INSTALLED" ]; then
+    echo "⚠️  拡張機能リストを取得できませんでした"
+    exit 0
+fi
+
+INSTALLED=$(echo "$RAW_INSTALLED" | sed -E 's/^[[:space:]]*-[[:space:]]*//' | grep -Ei '^[a-z0-9][a-z0-9._-]*\.[a-z0-9._-]+$')
 
 if [ -z "$INSTALLED" ]; then
-    echo "⚠️  拡張機能リストを取得できませんでした"
+    echo "⚠️  拡張機能リストの解析に失敗しました(出力形式が変更された可能性があります)"
+    echo "--- 生の出力 ---"
+    echo "$RAW_INSTALLED"
     exit 0
 fi
 
@@ -61,6 +78,7 @@ echo ""
 echo "⚠️  許可リストにない拡張機能:"
 FOUND_UNAUTHORIZED=0
 while IFS= read -r ext; do
+    [ -z "$ext" ] && continue
     ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
 
     # 許可リストにあるかチェック
