@@ -131,7 +131,7 @@
         },
         
         // アクセシビリティ支援機能（音声通知は無効）
-        "editor.accessibilitySupport": "on",
+        "editor.accessibilitySupport": "auto",
         "accessibility.signals.lineHasError": {
           "sound": "off",
           "announcement": "off"
