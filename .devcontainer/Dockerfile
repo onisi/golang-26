@@ -123,7 +123,7 @@ WORKDIR /workspaces
 RUN mkdir -p /tmp/sqlite-prefetch && \
     cd /tmp/sqlite-prefetch && \
     go mod init prefetch && \
-    go get modernc.org/sqlite@latest && \
+    GOSUMDB=off GOFLAGS=-mod=mod go get modernc.org/sqlite@latest && \
     cd / && rm -rf /tmp/sqlite-prefetch
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
