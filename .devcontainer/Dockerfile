@@ -105,9 +105,10 @@ RUN apt-get update && \
     find /usr/share -type f -name "*.pyc" -delete && \
     find /usr/share -type d -name "__pycache__" -delete
 
-# ディレクトリ作成と所有権設定(/go はCOPY時点で既にvscode所有のため対象から除外)
+# ディレクトリ作成と所有権設定(/go はCOPY時点で既にvscode所有だが、
+# ここで新規作成する /go/pkg/mod はroot権限で作られるため明示的にchown対象に含める)
 RUN mkdir -p /go/pkg/mod /workspaces /home/vscode/.cache/go-build && \
-    chown -R vscode:vscode /workspaces /home/vscode/.cache && \
+    chown -R vscode:vscode /go/pkg/mod /workspaces /home/vscode/.cache && \
     chmod -R 755 /workspaces
 
 USER vscode
