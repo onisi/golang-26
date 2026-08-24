@@ -1,63 +1,60 @@
-# Golang開発環境用Dockerfile（サイズ最適化版・Podman対応）
+# Golang開発環境用Dockerfile(サイズ最適化版・Podman対応・軽量ベース版)
+#
+# 変更点(2026 fall):
+# - ベースイメージを mcr.microsoft.com/devcontainers/base:trixie から
+#   debian:trixie-slim に変更(common-utils/gitフィーチャーの766MBを排除)
+# - vscodeユーザーはdevcontainer featureに頼らず自前で作成
+# - gitはDebian trixieのaptパッケージ版(ソースビルドしない)
+# - zsh/oh-my-zshは導入しない(bashのみ)
+# - COPY時に --chown を指定し、後段の chown -R による二重コピー(約92MB)を排除
 #
 # ビルド方法:
 #   podman system prune -a -f --volumes  # 初回推奨
-#   podman build --no-cache --format docker -t go-devcontainer:slim .
-#
-# 通常ビルド:
-#   podman build --format docker -t go-devcontainer:slim .
-#
-# サイズ削減のポイント:
-# 1. builderステージでビルドツール削除
-# 2. 最終ステージでgcc等の削減（CGO不要なら削除可能）
-# 3. Go開発ツールのバイナリサイズ削減
-# 4. キャッシュの完全削除
-FROM mcr.microsoft.com/devcontainers/base:debian AS builder
+#   podman build --format docker --no-cache \
+#     --tag ghcr.io/onisi/omu-sss-websys:latest \
+#     --tag ghcr.io/onisi/omu-sss-websys:2026fall .
 
-ENV GO_VERSION=1.23.12 \
+FROM debian:trixie-slim AS builder
+
+ENV GO_VERSION=1.25.12 \
     DEBIAN_FRONTEND=noninteractive
 
-# 最小限のパッケージでGoをインストール
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Goのダウンロードとインストール
 RUN set -eux; \
     wget -q -O "/tmp/go${GO_VERSION}.linux-amd64.tar.gz" \
         "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" && \
     tar -C /usr/local -xzf "/tmp/go${GO_VERSION}.linux-amd64.tar.gz" && \
     rm -f "/tmp/go${GO_VERSION}.linux-amd64.tar.gz"
 
-# Go開発ツールをビルド（ストリップして軽量化）
 ENV PATH=/usr/local/go/bin:$PATH \
     GOPATH=/tmp/gotools \
     CGO_ENABLED=0
 
-RUN go install -ldflags="-s -w" golang.org/x/tools/gopls@v0.16.2 && \
-    go install -ldflags="-s -w" github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 && \
-    go install -ldflags="-s -w" golang.org/x/tools/cmd/goimports@v0.25.0 && \
-    go install -ldflags="-s -w" github.com/go-delve/delve/cmd/dlv@v1.23.1 && \
-    # さらにupxで圧縮（オプション、コメントアウト推奨）
-    # apt-get update && apt-get install -y upx-ucl && \
-    # upx --best --lzma /tmp/gotools/bin/* && \
+# 注意: gopls / dlv はビルド時点の @latest を使用(要バージョン固定検討)
+RUN go install -ldflags="-s -w" golang.org/x/tools/gopls@latest && \
+    go install -ldflags="-s -w" github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && \
+    go install -ldflags="-s -w" golang.org/x/tools/cmd/goimports@latest && \
+    go install -ldflags="-s -w" github.com/go-delve/delve/cmd/dlv@latest && \
     go clean -cache -modcache -testcache && \
     rm -rf /tmp/gotools/pkg /tmp/gotools/src
 
-# 最終ステージ（最小構成）
-FROM mcr.microsoft.com/devcontainers/base:debian
+# 最終ステージ(最小構成・debian:trixie-slimベース)
+FROM debian:trixie-slim
 
 LABEL maintainer="onisi@omu.ac.jp" \
-      description="Size-optimized Golang development environment" \
-      version="25.10.4-slim" \
-      base-os="debian-trixie" \
-      go-version="1.23.12" \
-      org.opencontainers.image.source="https://github.com/OMU-WSYSCB-ONISI/golang" \
+      description="Size-optimized Golang development environment (slim base)" \
+      version="26.1.0-slim" \
+      base-os="debian-trixie-slim" \
+      go-version="1.25.12" \
+      org.opencontainers.image.source="https://github.com/onisi/golang-26" \
       org.opencontainers.image.licenses="MIT"
 
-ARG GO_VERSION=1.23.12
+ARG GO_VERSION=1.25.12
 
 ENV GOPATH=/go \
     GOBIN=/go/bin \
@@ -69,17 +66,22 @@ ENV GOPATH=/go \
     GOTOOLCHAIN=local \
     CGO_ENABLED=0
 
-# Goとツールをコピー
-COPY --from=builder /usr/local/go /usr/local/go
-COPY --from=builder /tmp/gotools/bin/* /go/bin/
+# vscodeユーザーを先に作成(この後のCOPY --chownで参照するため)
+RUN groupadd --gid 1000 vscode && \
+    useradd --uid 1000 --gid 1000 -m -s /bin/bash vscode
 
-# 最小限のパッケージのみインストール（CGO不要のため gcc/build-essential 削除）
+# Goとツールをコピー(--chownで所有者を指定し、後段のchown -Rによる二重コピーを回避)
+COPY --from=builder --chown=vscode:vscode /usr/local/go /usr/local/go
+COPY --from=builder --chown=vscode:vscode /tmp/gotools/bin/* /go/bin/
+
+# 必要最小限のパッケージのみインストール
+# (common-utils/gitフィーチャーの代替。gitはaptのDebian標準版を使用、zshは導入しない)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         sudo git make ca-certificates \
         tzdata locales \
         curl wget vim-tiny && \
-    # ロケール設定（最小限）
+    # ロケール設定(最小限)
     echo "ja_JP.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen ja_JP.UTF-8 && \
     # タイムゾーン設定
@@ -103,42 +105,27 @@ RUN apt-get update && \
     find /usr/share -type f -name "*.pyc" -delete && \
     find /usr/share -type d -name "__pycache__" -delete
 
-# ディレクトリ作成と所有権設定
-RUN mkdir -p /go/bin /go/pkg/mod /workspaces /home/vscode/.cache/go-build && \
-    chown -R vscode:vscode /go /workspaces /home/vscode/.cache && \
-    chmod -R 755 /go /workspaces
+# ディレクトリ作成と所有権設定(/go はCOPY時点で既にvscode所有のため対象から除外)
+RUN mkdir -p /go/pkg/mod /workspaces /home/vscode/.cache/go-build && \
+    chown -R vscode:vscode /workspaces /home/vscode/.cache && \
+    chmod -R 755 /workspaces
 
 USER vscode
 WORKDIR /workspaces
+
+# modernc.org/sqlite(CGo不要な純Go実装のSQLiteドライバ)を事前にGOMODCACHEへ
+# ダウンロードしておく。devcontainer.jsonの go-mod-cache 名前付きボリュームは、
+# 学生の初回Codespace作成時(ボリュームが空の状態)にイメージ内容がそのまま
+# コピーされるため、ここで温めておいたキャッシュがそのまま使われ、
+# 学生側での初回 `go get` のダウンロード待ちが発生しない。
+# 既にボリュームが存在する学生には自動反映されない点に注意。
+RUN mkdir -p /tmp/sqlite-prefetch && \
+    cd /tmp/sqlite-prefetch && \
+    go mod init prefetch && \
+    go get modernc.org/sqlite@latest && \
+    cd / && rm -rf /tmp/sqlite-prefetch
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD go version && gopls version || exit 1
 
 CMD ["/bin/bash"]
-
-# =============================================================================
-# サイズ削減効果（CGO無効化版）:
-# - 元のイメージ: 約1.5GB
-# - 最適化版: 約900MB-1.1GB（約27-40%削減）
-#
-# 削減内容:
-# ✓ Go開発ツールのストリップ（-ldflags="-s -w"）: 約50MB削減
-# ✓ gcc/build-essentialの削除: 約100MB削減
-# ✓ ドキュメント/マニュアル/ロケールファイル削除: 約50-100MB削減
-# ✓ vim → vim-tiny: 約5MB削減
-# ✓ nano/less削除: 約3MB削減
-#
-# さらなる削減オプション:
-# 1. golangci-lintを削除（容量大） → 約150MB削減
-#    ※ 静的解析が不要な場合のみ推奨
-# 2. dlv（デバッガ）を削除 → 約30MB削減
-#    ※ デバッグが不要な場合のみ推奨
-# 3. distroless/static-debianベースに変更 → 約50%削減（上級者向け）
-#
-# CGO無効化の影響:
-# - CGO_ENABLED=0により、純粋なGoコードのみコンパイル可能
-# - Cライブラリに依存するパッケージ（sqlite3等）は使用不可
-# - クロスコンパイルが容易になる
-# - バイナリサイズが小さくなる
-# - 教育目的には十分な機能を保持
-# =============================================================================
