@@ -111,6 +111,16 @@ RUN mkdir -p /go/pkg/mod /workspaces /home/vscode/.cache/go-build && \
     chown -R vscode:vscode /go/pkg/mod /workspaces /home/vscode/.cache && \
     chmod -R 755 /workspaces
 
+# ワークスペースの信頼(Workspace Trust)を無効化する。
+# devcontainer.jsonのcustomizations.vscode.settingsはワークスペーススコープの設定
+# として扱われ、security.*系のセキュリティ設定はそこからの上書きが意図的に
+# 許可されていない(信頼されていないリポジトリ自身がこのチェックを無効化できて
+# しまうと本末転倒なため)。確実に無効化するには、VS Code Serverの
+# Machine設定ファイルに直接書き込む必要がある。
+RUN mkdir -p /home/vscode/.vscode-server/data/Machine && \
+    echo '{"security.workspace.trust.enabled": false}' > /home/vscode/.vscode-server/data/Machine/settings.json && \
+    chown -R vscode:vscode /home/vscode/.vscode-server
+
 USER vscode
 WORKDIR /workspaces
 
