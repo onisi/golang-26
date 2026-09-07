@@ -23,6 +23,32 @@
       
       "settings": {
         // ===== AI補完機能の厳格な無効化（教育目的） =====
+        // 元栓（VS Code全体のAI機能を包括的に無効化）
+        "chat.disableAIFeatures": true,
+
+        // ワークスペースの信頼(Workspace Trust)を無効化
+        // Codespace起動のたびに「このフォルダー内のファイルの作成者を信頼しますか」
+        // という確認ダイアログが表示され、学生が毎回つまずく原因になっていた
+        // (2026fall実機検証で確認)。今回のリポジトリはGHCRの信頼できるイメージ・
+        // 教員が管理するリポジトリからのみ起動される前提のため、学生が不審な
+        // 外部リポジトリを不用意に開くリスクは低いと判断し、無効化した。
+        "security.workspace.trust.enabled": false,
+
+        // MCPサーバー（拡張機能タブの「MCPサーバー」マーケットプレース導線を無効化）
+        // 2026fall実機検証で、拡張機能タブに「MCPサーバー マーケットプレースを
+        // 有効にする」ボタンが表示されることが判明したため追加。
+        "chat.mcp.enabled": false,
+        "chat.mcp.gallery.enabled": false,
+
+        // コマンドパレット上のChatコマンド抑制を試みる設定
+        // 【検証済み】2026fall実機検証の結果、これを追加してもコマンドパレットで
+        // 「copil」等と検索した際の「チャット: Copilotで AI機能を無料で使用する...」
+        // 等のコマンド表示は消えなかった（VS Code/Codespaces基盤に組み込まれた
+        // コマンドのため、拡張機能・設定側からは制御不可と判断）。実際の利用には
+        // 認証・サブスクリプションが必要で実害はないため、「見えるが使えない」
+        // 状態として許容する。将来的な抑止手段が判明すれば別途反映。
+        "chat.commandCenter.enabled": false,
+
         // GitHub Copilot
         "github.copilot.enable": {
           "*": false,
@@ -35,6 +61,7 @@
         "github.copilot.editor.enableCodeActions": false,
         "github.copilot.chat.enabled": false,
         "github.copilot.chat.welcomeMessage": "off",
+        "github.copilot.nextEditSuggestions.enabled": false,
         
         // VS Code組み込みのAI機能
         "chat.enabled": false,
@@ -65,9 +92,6 @@
           "comments": false,
           "strings": false
         },
-        "chat.mcp.enabled": false,
-        "chat.mcp.gallery.enabled": false,
-	"chat.commandCenter.enabled": false,
         
         // ===== Go設定 =====
         "go.useLanguageServer": true,
@@ -132,6 +156,8 @@
         },
         
         // アクセシビリティ支援機能（音声通知は無効）
+        // 【修正】"on"はスクリーンリーダー未接続環境でも読み上げ関連の挙動を
+        // 誘発する可能性があるため、自動検出の"auto"に修正（2026fall実機検証で判明）。
         "editor.accessibilitySupport": "auto",
         "accessibility.signals.lineHasError": {
           "sound": "off",
@@ -449,5 +475,3 @@
     "storage": "32gb"
   }
 }
-
-
