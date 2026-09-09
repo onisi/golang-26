@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "go: build",
+      "label": "Go: ビルド",
       "type": "shell",
       "command": "go",
       "args": [
@@ -23,24 +23,7 @@
       "problemMatcher": "$go"
     },
     {
-      "label": "go: run current file",
-      "type": "shell",
-      "command": "go",
-      "args": [
-        "run",
-        "${file}"
-      ],
-      "group": "none",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,        // 変更: エディタにフォーカスを維持
-        "panel": "shared"      // 変更: 共有パネルを使用
-      },
-      "problemMatcher": "$go"
-    },
-    {
-      "label": "go: test",
+      "label": "Go: テスト",
       "type": "shell",
       "command": "go",
       "args": [
@@ -61,7 +44,7 @@
       "problemMatcher": "$go"
     },
     {
-      "label": "go: mod tidy",
+      "label": "Go: 依存関係を整理(mod tidy)",
       "type": "shell",
       "command": "go",
       "args": [
@@ -77,7 +60,7 @@
       }
     },
     {
-      "label": "go: fmt all",
+      "label": "Go: 全体をフォーマット(fmt)",
       "type": "shell",
       "command": "go",
       "args": [
