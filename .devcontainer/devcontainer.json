@@ -94,6 +94,15 @@
         },
         
         // ===== Go設定 =====
+        // Code Runnerが`go run`を使うと「go runプロセス」と「ビルドされた
+        // 子バイナリ」の2プロセスに分かれ、出力パネルの停止アイコンや
+        // ターミナルのCtrl+Cが親(go run)にしか届かず、子バイナリだけが
+        // ポートを掴んだまま残ってしまう問題が2026fall実機検証で判明した。
+        // `go build` → `exec`でプロセスを1つに集約することで、
+        // 停止アイコン・Ctrl+Cのどちらでも確実に止められるようにする。
+        "code-runner.executorMap": {
+          "go": "cd $dirWithoutTrailingSlash && go build -o /tmp/code-runner-app $fileNameWithoutExt.go && exec /tmp/code-runner-app"
+        },
         "go.useLanguageServer": true,
         "go.lintTool": "golangci-lint",
         "go.lintOnSave": "workspace",
