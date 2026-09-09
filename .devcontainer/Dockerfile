@@ -76,11 +76,16 @@ COPY --from=builder --chown=vscode:vscode /tmp/gotools/bin/* /go/bin/
 
 # 必要最小限のパッケージのみインストール
 # (common-utils/gitフィーチャーの代替。gitはaptのDebian標準版を使用、zshは導入しない)
+# procps/psmisc/iproute2/lsof/lessは、学生・教員がポート衝突や取り残し
+# プロセスのトラブルシューティングを行うための最小限の診断ツール一式。
+# (例: `sudo ss -ltnp` でポートを掴んでいるPIDを特定、`fuser -k 8080/tcp`
+# で直接終了、`ps`/`kill`/`pkill`で通常のプロセス管理)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         sudo git make ca-certificates \
         tzdata locales \
-        curl wget vim-tiny && \
+        curl wget vim-tiny \
+        procps psmisc iproute2 lsof less && \
     # ロケール設定(最小限)
     echo "ja_JP.UTF-8 UTF-8" > /etc/locale.gen && \
     locale-gen ja_JP.UTF-8 && \
