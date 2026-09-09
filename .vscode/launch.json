@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Package",
+      "name": "Go: 現在のフォルダーを実行",
       "type": "go",
       "request": "launch",
       "mode": "auto",
@@ -11,20 +11,11 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
-      "name": "Launch File",
+      "name": "Go: 現在のファイルを実行",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${file}",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
-    },
-    {
-      "name": "Launch main.go",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "${workspaceFolder}/main.go",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     }
