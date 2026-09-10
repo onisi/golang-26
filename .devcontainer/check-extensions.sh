@@ -11,7 +11,6 @@ ALLOWED_EXTENSIONS=(
     "usernamehw.errorlens"
     "aaron-bond.better-comments"
     "wayou.vscode-todo-highlight"
-    "mhutchie.git-graph"
     "pkief.material-icon-theme"
     "ms-ceintl.vscode-language-pack-ja"
     "yzhang.markdown-all-in-one"
