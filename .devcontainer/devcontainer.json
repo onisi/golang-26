@@ -11,7 +11,6 @@
         "mosapride.zenkaku",
         "shardulm94.trailing-spaces",
         "usernamehw.errorlens",
-        "formulahendry.code-runner",
         "aaron-bond.better-comments",
         "wayou.vscode-todo-highlight",
         "mhutchie.git-graph",
@@ -94,15 +93,16 @@
         },
         
         // ===== Go設定 =====
-        // Code Runnerが`go run`を使うと「go runプロセス」と「ビルドされた
-        // 子バイナリ」の2プロセスに分かれ、出力パネルの停止アイコンや
-        // ターミナルのCtrl+Cが親(go run)にしか届かず、子バイナリだけが
-        // ポートを掴んだまま残ってしまう問題が2026fall実機検証で判明した。
-        // `go build` → `exec`でプロセスを1つに集約することで、
-        // 停止アイコン・Ctrl+Cのどちらでも確実に止められるようにする。
-        "code-runner.executorMap": {
-          "go": "cd $dirWithoutTrailingSlash && go build -o /tmp/code-runner-app $fileNameWithoutExt.go && exec /tmp/code-runner-app"
-        },
+        // 2026fall実機検証で、Code Runner(formulahendry.code-runner)は
+        // `go run`使用時に「go runプロセス」と「ビルドされた子バイナリ」の
+        // 2プロセスに分かれて子バイナリが取り残される問題、および
+        // `exec`で1プロセスに集約した後も出力パネルの停止アイコンが
+        // この環境(GitHub Codespaces)ではプロセスへのシグナル送信が
+        // 機能せず実際には停止できない問題が確認された。この講義では
+        // Go以外の言語を実行する場面がないため、Code Runner拡張自体を
+        // 廃止し、代わりに.vscode/launch.jsonの「実行とデバッグ」機能
+        // (dlvが実行対象プロセスを直接管理するため停止が確実)を
+        // 主軸とする方針に変更した。
         "go.useLanguageServer": true,
         "go.lintTool": "golangci-lint",
         "go.lintOnSave": "workspace",
