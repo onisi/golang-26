@@ -9,7 +9,6 @@ ALLOWED_EXTENSIONS=(
     "mosapride.zenkaku"
     "shardulm94.trailing-spaces"
     "usernamehw.errorlens"
-    "formulahendry.code-runner"
     "aaron-bond.better-comments"
     "wayou.vscode-todo-highlight"
     "mhutchie.git-graph"
