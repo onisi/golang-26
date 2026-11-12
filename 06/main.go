@@ -12,5 +12,5 @@ func main() {
 	}
 }
 func hellohandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "こんにちは from Glitch !")
+	fmt.Fprintf(w, "こんにちは from Codespace!")
 }
